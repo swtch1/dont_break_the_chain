@@ -1,23 +1,24 @@
 package main
 
-import (
-	"fmt"
-	"io"
-)
+type DaterWriter interface {
+	Days() int // last recorded numbered day of the year is in time.Now().YearDay()
+	Year() int // last recorded year as in time.Now().Year()
+	WriteDate(yearDays, year int) error
+}
 
 type chain struct {
-	// path to database
-	dbPath io.ReadWriter
+	// chain database
+	db DaterWriter
 }
 
 // markToday marks today as done in the database.
 func (c *chain) markToday() error {
-	t := today()
-	b := []byte(fmt.Sprintf("%d:%d", t.yearDays, t.year))
-	if _, err := c.dbPath.Write(b); err != nil {
-		return err
-	}
-	return nil
+	return c.db.WriteDate(today().yearDays, today().year)
+}
+
+// days returns the number of days the chain has been unbroken for.
+func (c *chain) days() int {
+	return c.db.Days()
 }
 
 // broken reports if the chain has been broken.
