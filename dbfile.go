@@ -1,6 +1,8 @@
 package main
 
 import (
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"os"
 )
 
@@ -11,10 +13,29 @@ type dbYaml struct {
 
 // dbFile is the file representation of a chains database.
 type dbFile struct {
-	path string
+	yearDays int
+	year     int
+	path     string
 }
 
-func (db dbFile) Write(p []byte) (n int, err error) {
+// Load loads the yearDays and year from the source file.
+func (db *dbFile) Load() error {
+	b, err := ioutil.ReadFile(db.path)
+	if err != nil {
+		return err
+	}
+
+	y := dbYaml{}
+	if err = yaml.Unmarshal(b, &y); err != nil {
+		return err
+	}
+
+	db.yearDays = y.YearDays
+	db.year = y.Year
+	return nil
+}
+
+func (db *dbFile) Write(p []byte) (n int, err error) {
 	f, err := os.Create(db.path)
 	if err != nil {
 		return 0, err
@@ -23,14 +44,18 @@ func (db dbFile) Write(p []byte) (n int, err error) {
 	return f.Write(p)
 }
 
-func (db dbFile) WriteDate(yearDays, year int) error {
-	return nil
+func (db *dbFile) WriteDate(yearDays, year int) error {
+	y, err := yaml.Marshal(dbYaml{YearDays: yearDays, Year: year})
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(db.path, y, 0655)
 }
 
-func (db dbFile) Days() int {
-	return 12345
+func (db *dbFile) Days() int {
+	return db.yearDays
 }
 
-func (db dbFile) Year() int {
-	return 2000
+func (db *dbFile) Year() int {
+	return db.year
 }
