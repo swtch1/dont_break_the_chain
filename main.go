@@ -33,7 +33,19 @@ func main() {
 	}
 
 	db := dbFile{path: cfg}
-	defaultChain := chain{db}
+	if err = db.Load(); err != nil {
+		log.Fatal().Msgf("error loading from database file at %s: %s", cfg, err)
+	}
+
+	defaultChain := chain{&db}
+
+	// if db has zero vals we need to do an initial population
+	if db.yearDays == 0 && db.year == 0 {
+		if err := defaultChain.markToday(); err != nil {
+			log.Fatal().Err(err)
+		}
+	}
+
 	if defaultChain.broken() {
 		fmt.Printf("oh no, you broke the chain after %d days. keep this one going longer.\n", defaultChain.days())
 	}
