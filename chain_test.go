@@ -56,7 +56,7 @@ func TestBrokenChain(t *testing.T) {
 			// load db to pull file values into db struct as the chain references the db
 			assert.Nil(db.Load())
 
-			assert.EqualValues(tt.expectBroken, c.broken())
+			assert.EqualValues(tt.expectBroken, c.Broken())
 		})
 	}
 }
