@@ -15,3 +15,14 @@ func today() date {
 		year:     now.Year(),
 	}
 }
+
+// yesterday returns the date of yesterday,
+func yesterday() date {
+	now := time.Now()
+	// subtract 24 hours to get yesterday
+	oneDayAgo := now.Add(-time.Hour * 24)
+	return date{
+		yearDays: oneDayAgo.YearDay(),
+		year:     oneDayAgo.Year(),
+	}
+}
