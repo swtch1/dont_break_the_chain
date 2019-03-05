@@ -44,8 +44,13 @@ func main() {
 		}
 	}
 
-	if defaultChain.broken() {
-		fmt.Printf("oh no, you broke the chain after %d days. keep this one going longer.\n", defaultChain.days())
+	if defaultChain.Broken() {
+		fmt.Printf("oh no, you broke the chain after %d yearDays. keep this one going longer.\n", defaultChain.Length())
+	}
+
+	fmt.Println("today has been marked. great work!")
+	if err := defaultChain.markToday(); err != nil {
+		log.Fatal().Err(err)
 	}
 
 }
