@@ -48,7 +48,7 @@ func TestLoadingYearAndYearDaysFromFile(t *testing.T) {
 			// load temp file contents into new dbfile
 			dbf := dbFile{path: f.Name()}
 			assert.Nil(dbf.Load())
-			assert.EqualValues(tt.expectedDate, dbf.date)
+			assert.EqualValues(tt.expectedDate, dbf.lastDate)
 		})
 	}
 }
@@ -90,13 +90,13 @@ func TestWritingDateToDbFile(t *testing.T) {
 			assert.Nil(tmp.Close())
 
 			db := dbFile{path: tmp.Name()}
-			err = db.WriteDate(tt.date)
+			err = db.WriteLastDate(tt.date)
 			if tt.expectParseErr {
 				assert.Error(err)
 			} else {
 				assert.Nil(err)
 				assert.Nil(db.Load())
-				assert.EqualValues(tt.date, db.date)
+				assert.EqualValues(tt.date, db.lastDate)
 			}
 		})
 	}
