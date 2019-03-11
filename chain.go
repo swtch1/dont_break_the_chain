@@ -1,9 +1,14 @@
 package main
 
+import (
+	"github.com/rs/zerolog/log"
+	"time"
+)
+
 type DaterWriter interface {
-	Days() int // last recorded numbered day of the year is in time.Now().YearDay()
-	Year() int // last recorded year as in time.Now().Year()
-	WriteDate(yearDays, year int) error
+	// Date is the string date (format YYYY time.Month DD) from the last marked day.
+	Date() string
+	WriteDate(date string) error
 }
 
 type chain struct {
@@ -13,32 +18,25 @@ type chain struct {
 
 // markToday marks today as done in the database.
 func (c *chain) markToday() error {
-	return c.db.WriteDate(today().yearDays, today().year)
-}
-
-// yearDays returns the yearDays the chain was last marked with.
-func (c *chain) yearDays() int {
-	return c.db.Days()
-}
-
-// year returns the year in which the chain was last marked with.
-func (c *chain) year() int {
-	return c.db.Year()
+	t := today()
+	log.Debug().Msgf("marking today '%s' in database", t)
+	return c.db.WriteDate(t)
 }
 
 // Broken reports if the chain has been broken.
 func (c *chain) Broken() bool {
-	if c.yearDays() == today().yearDays && c.year() == today().year {
-		return false
-	}
-	if c.yearDays() == yesterday().yearDays && c.year() == yesterday().year {
+	if c.db.Date() == today() || c.db.Date() == yesterday() {
 		return false
 	}
 	return true
 }
 
 // Length returns the number of days the chain has been unbroken for.
-func (c *chain) Length() int {
-	// so here we could do some calculus but it may make more sense to refactor the way we store the date so that we
-	// can just bring it in and calculate.  I think we've leaked our logic into the config unnecessarily.
+func (c *chain) Length() (int, error) {
+	d, err := time.Parse(dateFmt, c.db.Date())
+	if err != nil {
+		return 0, err
+	}
+	hoursDiff := time.Now().Sub(d).Hours()
+	return int(hoursDiff / 24), nil
 }

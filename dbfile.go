@@ -1,25 +1,28 @@
 package main
 
 import (
+	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"os"
+	"time"
 )
 
 type dbYaml struct {
-	YearDays int `yaml:"last_marked_year_days"`
-	Year     int `yaml:"last_marked_year"`
+	// Date matches the format '2006 January 2'
+	Date string `yaml:"last_marked_date"`
 }
 
 // dbFile is the file representation of a chains database.
 type dbFile struct {
-	yearDays int
-	year     int
-	path     string
+	// date is the last marked day from the YAML file. this matches the format '2006 January 2'.
+	date string
+	// path is where the db file is located
+	path string
 }
 
 // Load loads the yearDays and year from the source file.
 func (db *dbFile) Load() error {
+	log.Debug().Msgf("loading config from database file at %s", db.path)
 	b, err := ioutil.ReadFile(db.path)
 	if err != nil {
 		return err
@@ -30,32 +33,33 @@ func (db *dbFile) Load() error {
 		return err
 	}
 
-	db.yearDays = y.YearDays
-	db.year = y.Year
+	if y.Date == "" {
+		log.Debug().Msgf("no date read from database file, the file may be empty")
+	} else {
+		log.Debug().Msgf("latest marked date in database file is %s", y.Date)
+	}
+	db.date = y.Date
 	return nil
 }
 
-func (db *dbFile) Write(p []byte) (n int, err error) {
-	f, err := os.Create(db.path)
-	if err != nil {
-		return 0, err
+// WriteDate writes the date string to the dbFile. The format
+// of the date should be YYYY time.Month DD.  An invalid date will
+// result in an error.
+//
+// Example: db.WriteDate("2020 February 5")
+func (db *dbFile) WriteDate(date string) error {
+	// validate date before writing
+	if _, err := time.Parse(dateFmt, date); err != nil {
+		return err
 	}
 
-	return f.Write(p)
-}
-
-func (db *dbFile) WriteDate(yearDays, year int) error {
-	y, err := yaml.Marshal(dbYaml{YearDays: yearDays, Year: year})
+	y, err := yaml.Marshal(dbYaml{Date: date})
 	if err != nil {
 		return err
 	}
 	return ioutil.WriteFile(db.path, y, 0655)
 }
 
-func (db *dbFile) Days() int {
-	return db.yearDays
-}
-
-func (db *dbFile) Year() int {
-	return db.year
+func (db *dbFile) Date() string {
+	return db.date
 }

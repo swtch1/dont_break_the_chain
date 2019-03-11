@@ -1,28 +1,28 @@
 package main
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
-type date struct {
-	yearDays int
-	year     int
-}
+const dateFmt = "2006 January 2"
 
-// today returns the current date.
-func today() date {
+// today returns the current date at a string in the format of 'YYYY time.Month DD'.
+func today() string {
 	now := time.Now()
-	return date{
-		yearDays: now.YearDay(),
-		year:     now.Year(),
-	}
+	y, m, d := now.Date()
+	return dateString(y, m, d)
 }
 
 // yesterday returns the date of yesterday,
-func yesterday() date {
+func yesterday() string {
 	now := time.Now()
 	// subtract 24 hours to get yesterday
 	oneDayAgo := now.Add(-time.Hour * 24)
-	return date{
-		yearDays: oneDayAgo.YearDay(),
-		year:     oneDayAgo.Year(),
-	}
+	y, m, d := oneDayAgo.Date()
+	return dateString(y, m, d)
+}
+
+func dateString(year int, month time.Month, day int) string {
+	return fmt.Sprintf("%d %s %d", year, month, day)
 }
