@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func initLogger() {
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+func initLogger(logLevel zerolog.Level) {
+	zerolog.SetGlobalLevel(logLevel)
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 }
