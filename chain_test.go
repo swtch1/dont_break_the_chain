@@ -52,7 +52,7 @@ package main
 //			assert.Nil(db.Load())
 //
 //			c := chain{&db}
-//			assert.Nil(c.db.WriteDate(tt.writeDateYearDays, tt.writeDateYear))
+//			assert.Nil(c.db.WriteLastDate(tt.writeDateYearDays, tt.writeDateYear))
 //
 //			// load db to pull file values into db struct as the chain references the db
 //			assert.Nil(db.Load())

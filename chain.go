@@ -6,9 +6,14 @@ import (
 )
 
 type DaterWriter interface {
-	// Date is the string date (format YYYY time.Month DD) from the last marked day.
-	Date() string
-	WriteDate(date string) error
+	// FirstDate is the string date (format YYYY time.Month DD) from the first marked day of the chain.
+	FirstDate() string
+	// LastDate is the string date (format YYYY time.Month DD) from the last marked day of the chain.
+	LastDate() string
+	// WriteFirstDate writes date to the first marked day of the chain in the database.
+	WriteFirstDate(date string) error
+	// WriteLastDate writes date to the last marked day of the chain in the database.
+	WriteLastDate(date string) error
 }
 
 type chain struct {
@@ -16,16 +21,16 @@ type chain struct {
 	db DaterWriter
 }
 
-// markToday marks today as done in the database.
-func (c *chain) markToday() error {
+// MarkToday marks today as done in the database.
+func (c *chain) MarkToday() error {
 	t := today()
 	log.Debug().Msgf("marking today '%s' in database", t)
-	return c.db.WriteDate(t)
+	return c.db.WriteLastDate(t)
 }
 
 // Broken reports if the chain has been broken.
 func (c *chain) Broken() bool {
-	if c.db.Date() == today() || c.db.Date() == yesterday() {
+	if c.db.LastDate() == today() || c.db.LastDate() == yesterday() {
 		return false
 	}
 	return true
@@ -33,7 +38,7 @@ func (c *chain) Broken() bool {
 
 // Length returns the number of days the chain has been unbroken for.
 func (c *chain) Length() (int, error) {
-	d, err := time.Parse(dateFmt, c.db.Date())
+	d, err := time.Parse(dateFmt, c.db.FirstDate()) // FIXME
 	if err != nil {
 		return 0, err
 	}
