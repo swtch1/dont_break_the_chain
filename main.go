@@ -41,6 +41,7 @@ func main() {
 		}
 	}
 
+	// set database as file and load into db file
 	db := dbFile{path: cfg}
 	if err = db.Load(); err != nil {
 		log.Fatal().Msgf("error loading from database file at %s: %s", cfg, err)
@@ -49,13 +50,14 @@ func main() {
 	defaultChain := chain{&db}
 
 	// if db has zero vals we need to do an initial population
-	if db.Date() == "" {
+	if db.LastDate() == "" {
 		fmt.Println("oh, I guess this is the first day for this chain. today will be your first of many. kick ass.")
-		if err := defaultChain.markToday(); err != nil {
+		if err := defaultChain.MarkToday(); err != nil {
 			log.Fatal().Msgf("unable to mark today on the chain: %s", err)
 		}
 	}
 
+	// get the length of the chain so we know how to report on it
 	chainLen, err := defaultChain.Length()
 	if err != nil {
 		log.Fatal().Err(err)
@@ -64,15 +66,19 @@ func main() {
 		fmt.Printf("oh no, you broke the chain after %d yearDays. keep this one going longer.\n", chainLen)
 	}
 
-	if err := defaultChain.markToday(); err != nil {
+	// mark today as done
+	if err := defaultChain.MarkToday(); err != nil {
 		log.Fatal().Err(err)
 	}
 	fmt.Println("today has been marked. great work!")
 
+	// get the new length after marking today
 	chainLen, err = defaultChain.Length()
 	if err != nil {
 		log.Fatal().Msgf("unable to get chain length: %s", err)
 	}
+
+	// show some motivational messages based on how long the chain has been running
 	fmt.Printf("you've been at it for %d days now. ", chainLen)
 	switch {
 	default:
