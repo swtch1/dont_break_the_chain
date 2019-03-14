@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -9,51 +10,57 @@ import (
 
 const (
 	contentBasic = `
+first_marked_date: 2006 January 2
 last_marked_date: 2006 January 2
 `
 	contentChanged = `
+first_marked_date: 2019 December 15
 last_marked_date: 2019 December 30
 `
 )
 
-func TestLoadingYearAndYearDaysFromFile(t *testing.T) {
+func TestLoadingValuesFromDbFile(t *testing.T) {
 	assert := assert.New(t)
 	tests := []struct {
-		name         string
-		fileContents string
-		expectedDate string
+		name                    string
+		fileContents            string
+		expectedFirstMarkedDate string
+		expectedLastMarkedDate  string
 	}{
 		{
-			name:         "basic",
-			fileContents: contentBasic,
-			expectedDate: "2006 January 2",
+			name:                    "basic",
+			fileContents:            contentBasic,
+			expectedFirstMarkedDate: "2006 January 2",
+			expectedLastMarkedDate:  "2006 January 2",
 		},
 		{
-			name:         "modified",
-			fileContents: contentChanged,
-			expectedDate: "2019 December 30",
+			name:                    "modified",
+			fileContents:            contentChanged,
+			expectedFirstMarkedDate: "2019 December 15",
+			expectedLastMarkedDate:  "2019 December 30",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// write file contents to a temp file
-			f, err := ioutil.TempFile("", "")
+			tmp, err := ioutil.TempFile("", "")
 			assert.Nil(err)
-			defer os.Remove(f.Name())
-			_, err = f.WriteString(tt.fileContents)
+			defer os.Remove(tmp.Name())
+			_, err = tmp.WriteString(tt.fileContents)
 			assert.Nil(err)
-			assert.Nil(f.Close())
+			assert.Nil(tmp.Close())
 
 			// load temp file contents into new dbfile
-			dbf := dbFile{path: f.Name()}
+			dbf := dbFile{path: tmp.Name()}
 			assert.Nil(dbf.Load())
-			assert.EqualValues(tt.expectedDate, dbf.lastDate)
+			assert.EqualValues(tt.expectedFirstMarkedDate, dbf.firstDate)
+			assert.EqualValues(tt.expectedLastMarkedDate, dbf.lastDate)
 		})
 	}
 }
 
-func TestWritingDateToDbFile(t *testing.T) {
+func TestWritingLastDateToDbFile(t *testing.T) {
 	assert := assert.New(t)
 	tests := []struct {
 		name           string
@@ -88,6 +95,7 @@ func TestWritingDateToDbFile(t *testing.T) {
 			tmp, err := ioutil.TempFile("", "")
 			assert.Nil(err)
 			assert.Nil(tmp.Close())
+			defer os.Remove(tmp.Name())
 
 			db := dbFile{path: tmp.Name()}
 			err = db.WriteLastDate(tt.date)
@@ -98,6 +106,73 @@ func TestWritingDateToDbFile(t *testing.T) {
 				assert.Nil(db.Load())
 				assert.EqualValues(tt.date, db.lastDate)
 			}
+		})
+	}
+}
+
+func TestWritingDateToExistingFilePreservesExistingValues(t *testing.T) {
+	assert := assert.New(t)
+
+	// loadedDbFile loads up and returns a dbFile
+	loadedDbFile := func(path, expectedFirstMarkedDate, expectedLastMarkedDate string) dbFile {
+		// read vals from path into dbYaml
+		y := dbYaml{}
+		b, err := ioutil.ReadFile(path)
+		assert.Nil(err)
+		assert.Nil(yaml.Unmarshal(b, &y))
+
+		// ensure we have what we expect in the struct
+		assert.EqualValues(expectedFirstMarkedDate, y.FirstDate)
+		assert.EqualValues(expectedLastMarkedDate, y.LastDate)
+
+		// load vals into dbFile
+		dbf := dbFile{path: path}
+		assert.Nil(dbf.Load())
+		return dbf
+	}
+
+	tests := []struct {
+		name                   string
+		initialFirstMarkedDate string
+		initialLastMarkedDate  string
+		updatedFirstMarkedDate string
+		updatedLastMarkedDate  string
+	}{
+		{
+			name:                   "no_changes",
+			initialFirstMarkedDate: "2006 January 1",
+			initialLastMarkedDate:  "2006 January 1",
+			updatedFirstMarkedDate: "2010 February 5",
+			updatedLastMarkedDate:  "2010 May 23",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// make a temp file for writing and reading test data
+			tmp, err := ioutil.TempFile("", "")
+			assert.Nil(err)
+			assert.Nil(tmp.Close())
+			defer os.Remove(tmp.Name())
+
+			// write vals out to tmp file
+			dbOut := dbYaml{FirstDate: tt.initialFirstMarkedDate, LastDate: tt.initialLastMarkedDate}
+			y, err := yaml.Marshal(dbOut)
+			assert.Nil(err)
+			assert.Nil(ioutil.WriteFile(tmp.Name(), y, 0655))
+
+			// load dbFile and ensure vals were loaded correctly
+			dbf := loadedDbFile(tmp.Name(), tt.initialFirstMarkedDate, tt.initialLastMarkedDate)
+			assert.EqualValues(tt.initialFirstMarkedDate, dbf.firstDate)
+			assert.EqualValues(tt.initialLastMarkedDate, dbf.lastDate)
+
+			// write out first date
+			assert.Nil(dbf.WriteFirstDate(tt.updatedFirstMarkedDate))
+
+			// load dbFile and ensure vals were loaded correctly
+			dbf = loadedDbFile(tmp.Name(), tt.initialFirstMarkedDate, tt.initialLastMarkedDate)
+			assert.EqualValues(tt.updatedFirstMarkedDate, dbf.firstDate)
+			assert.EqualValues(tt.updatedLastMarkedDate, dbf.lastDate)
 		})
 	}
 }
