@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -66,7 +67,12 @@ func (db *dbFile) WriteFirstDate(date string) error {
 		return err
 	}
 
-	y, err := yaml.Marshal(dbYaml{FirstDate: date})
+	if err := db.Load(); err != nil {
+		return errors.Wrapf(err, "unable to load db when attempting to write first date")
+	}
+
+	db.firstDate = date
+	y, err := yaml.Marshal(dbYaml{FirstDate: db.firstDate, LastDate: db.lastDate})
 	if err != nil {
 		return err
 	}
@@ -83,11 +89,16 @@ func (db *dbFile) WriteLastDate(date string) error {
 		return err
 	}
 
-	y, err := yaml.Marshal(dbYaml{LastDate: date})
+	if err := db.Load(); err != nil {
+		return errors.Wrapf(err, "unable to load db when attempting to write last date")
+	}
+
+	db.lastDate = date
+	y, err := yaml.Marshal(dbYaml{FirstDate: db.firstDate, LastDate: db.lastDate})
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(db.path, y, 0655) // FIXME: this is almost definitely going to fail because we are not parsing the file input first.
+	return ioutil.WriteFile(db.path, y, 0655)
 }
 
 // validateDate ensures that the date can be parsed.

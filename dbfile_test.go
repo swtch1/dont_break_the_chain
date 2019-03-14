@@ -114,16 +114,12 @@ func TestWritingDateToExistingFilePreservesExistingValues(t *testing.T) {
 	assert := assert.New(t)
 
 	// loadedDbFile loads up and returns a dbFile
-	loadedDbFile := func(path, expectedFirstMarkedDate, expectedLastMarkedDate string) dbFile {
+	loadedDbFile := func(path string) dbFile {
 		// read vals from path into dbYaml
 		y := dbYaml{}
 		b, err := ioutil.ReadFile(path)
 		assert.Nil(err)
 		assert.Nil(yaml.Unmarshal(b, &y))
-
-		// ensure we have what we expect in the struct
-		assert.EqualValues(expectedFirstMarkedDate, y.FirstDate)
-		assert.EqualValues(expectedLastMarkedDate, y.LastDate)
 
 		// load vals into dbFile
 		dbf := dbFile{path: path}
@@ -162,7 +158,7 @@ func TestWritingDateToExistingFilePreservesExistingValues(t *testing.T) {
 			assert.Nil(ioutil.WriteFile(tmp.Name(), y, 0655))
 
 			// load dbFile and ensure vals were loaded correctly
-			dbf := loadedDbFile(tmp.Name(), tt.initialFirstMarkedDate, tt.initialLastMarkedDate)
+			dbf := loadedDbFile(tmp.Name())
 			assert.EqualValues(tt.initialFirstMarkedDate, dbf.firstDate)
 			assert.EqualValues(tt.initialLastMarkedDate, dbf.lastDate)
 
@@ -170,7 +166,18 @@ func TestWritingDateToExistingFilePreservesExistingValues(t *testing.T) {
 			assert.Nil(dbf.WriteFirstDate(tt.updatedFirstMarkedDate))
 
 			// load dbFile and ensure vals were loaded correctly
-			dbf = loadedDbFile(tmp.Name(), tt.initialFirstMarkedDate, tt.initialLastMarkedDate)
+			// we expect the first value to have changed but not the last
+			dbf = loadedDbFile(tmp.Name())
+			assert.EqualValues(tt.updatedFirstMarkedDate, dbf.firstDate)
+			assert.EqualValues(tt.initialLastMarkedDate, dbf.lastDate)
+
+			// write out last date
+			assert.Nil(dbf.WriteLastDate(tt.updatedLastMarkedDate))
+
+			// load dbFile and ensure vals were loaded correctly
+			// we expect for both values to have been changed since we changed the first above and we've
+			// been using the same file the whole time.
+			dbf = loadedDbFile(tmp.Name())
 			assert.EqualValues(tt.updatedFirstMarkedDate, dbf.firstDate)
 			assert.EqualValues(tt.updatedLastMarkedDate, dbf.lastDate)
 		})
