@@ -111,4 +111,12 @@ func main() {
 	case chainLen > 50:
 		fmt.Println("just killing it.. every day, no matter what.")
 	}
+
+	// show some X's to give a feel for how long the chain has been going
+	fmt.Printf("progress -> ")
+	for x := 0; x < chainLen; x++ {
+		fmt.Printf("X")
+	}
+	fmt.Println("")
+
 }
