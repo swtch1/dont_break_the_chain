@@ -13,3 +13,6 @@
 
 # IDE Files
 .idea
+
+# Testing File
+playground.go
