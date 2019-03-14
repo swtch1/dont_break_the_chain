@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	configFileName = "dontbreakthechain.conf"
+	configFileName = "dontbreakthechain.yaml"
 )
 
 // configFilePath is the actual path of the configuration file determined by configLocation().
@@ -29,7 +29,7 @@ func configLocation() (string, error) {
 		return "", err
 	}
 
-	parent := filepath.Join(usr.HomeDir, ".config")
+	parent := filepath.Join(usr.HomeDir, ".local")
 	loc := filepath.Join(parent, configFileName)
 	f, err := os.Stat(parent)
 	if err == nil && f.IsDir() {

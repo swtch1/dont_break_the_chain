@@ -41,46 +41,59 @@ func main() {
 		}
 	}
 
+	// set database as file and load into db file
 	db := dbFile{path: cfg}
 	if err = db.Load(); err != nil {
 		log.Fatal().Msgf("error loading from database file at %s: %s", cfg, err)
 	}
 
+	// make a new chain
 	defaultChain := chain{&db}
 
 	// if db has zero vals we need to do an initial population
-	if db.Date() == "" {
+	if db.LastDate() == "" {
 		fmt.Println("oh, I guess this is the first day for this chain. today will be your first of many. kick ass.")
-		if err := defaultChain.markToday(); err != nil {
+		if err := defaultChain.Start(); err != nil {
+			log.Fatal().Msgf("unable to start chain: %s", err)
+		}
+		if err := defaultChain.MarkToday(); err != nil {
 			log.Fatal().Msgf("unable to mark today on the chain: %s", err)
 		}
 	}
 
-	chainLen, err := defaultChain.Length()
-	if err != nil {
-		log.Fatal().Err(err)
-	}
 	if defaultChain.Broken() {
-		fmt.Printf("oh no, you broke the chain after %d yearDays. keep this one going longer.\n", chainLen)
+		chainLen := defaultChain.Length()
+		if chainLen == 1 {
+			fmt.Println("oh no, you broke the chain after 1 day. keep this one going longer.")
+		} else {
+			fmt.Printf("oh no, you broke the chain after %d days. keep this one going longer.\n", chainLen)
+		}
+		if err := defaultChain.Start(); err != nil {
+			log.Fatal().Msgf("unable to start chain: %s", err)
+		}
 	}
 
-	if err := defaultChain.markToday(); err != nil {
+	// mark today as done
+	if err := defaultChain.MarkToday(); err != nil {
 		log.Fatal().Err(err)
 	}
 	fmt.Println("today has been marked. great work!")
 
-	chainLen, err = defaultChain.Length()
-	if err != nil {
-		log.Fatal().Msgf("unable to get chain length: %s", err)
+	// get the new length after marking today
+	chainLen := defaultChain.Length()
+	// show some motivational messages based on how long the chain has been running
+	if chainLen == 1 {
+		fmt.Printf("this is your first day. ")
+	} else {
+		fmt.Printf("you've been at it for %d days now. ", chainLen)
 	}
-	fmt.Printf("you've been at it for %d days now. ", chainLen)
 	switch {
 	default:
 		fmt.Println()
 	case chainLen <= 1:
 		fmt.Println("every journey has a beginning, set yourself up for success.")
 	case chainLen <= 2:
-		fmt.Println("come one, you got this.")
+		fmt.Println("come on, you got this.")
 	case chainLen <= 3:
 		fmt.Println("the first few days are the most important, let's go!")
 	case chainLen <= 5:
