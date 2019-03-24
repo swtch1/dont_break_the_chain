@@ -4,24 +4,22 @@ import (
 	"fmt"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
 )
 
 func main() {
-	// poor mans arg parsing
-	var level zerolog.Level
-	if len(os.Args) > 1 {
-		switch os.Args[1] {
-		case "--debug":
-			level = zerolog.DebugLevel
-		default:
-			level = zerolog.ErrorLevel
-		}
-	} else {
-		level = zerolog.ErrorLevel
-	}
+	// parse command line flags
+	kingpin.MustParse(dbtc.Parse(os.Args[1:]))
 
-	initLogger(level)
+	// set debug level if specified
+	var lvl zerolog.Level
+	if *debug {
+		lvl = zerolog.DebugLevel
+	} else {
+		lvl = zerolog.ErrorLevel
+	}
+	initLogger(lvl)
 
 	// ensure our config file exists or ask the user to create one
 	cfg, err := configLocation()
@@ -61,6 +59,7 @@ func main() {
 		}
 	}
 
+	// handle a broken chain
 	if defaultChain.Broken() {
 		chainLen := defaultChain.Length()
 		if chainLen == 1 {
