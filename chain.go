@@ -21,6 +21,26 @@ type chain struct {
 	db DaterWriter
 }
 
+// FirstMarkedDate returns the first marked date of the chain.
+func (c *chain) FirstMarkedDate() (time.Time, error) {
+	d, err := time.Parse(dateFmt, c.db.FirstDate())
+	if err != nil {
+		log.Error().Msgf("unable to parse first marked date '%s' into date format '%s'", c.db.FirstDate(), dateFmt)
+		return time.Time{}, err
+	}
+	return d, nil
+}
+
+// LastMarkedDate returns the last marked date of the chain.
+func (c *chain) LastMarkedDate() (time.Time, error) {
+	d, err := time.Parse(dateFmt, c.db.LastDate())
+	if err != nil {
+		log.Error().Msgf("unable to parse last marked date '%s' into date format '%s'", c.db.LastDate(), dateFmt)
+		return time.Time{}, err
+	}
+	return d, nil
+}
+
 // MarkToday marks today as done in the database, adding to the existing chain.
 func (c *chain) MarkToday() error {
 	t := today()
