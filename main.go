@@ -120,7 +120,6 @@ func main() {
 		fmt.Println()
 	} else {
 		// TODO: this needs to print more than the current month
-		fmt.Println()
 		start, err := defaultChain.FirstMarkedDate()
 		if err != nil {
 			log.Fatal().Err(err)
@@ -129,6 +128,13 @@ func main() {
 		if err != nil {
 			log.Fatal().Err(err)
 		}
-		PrintXCal(end.Year(), end.Month(), start, end)
+		months, err := monthsBetweenDates(start, end)
+		if err != nil {
+			log.Fatal().Err(err)
+		}
+		for _, m := range months {
+			fmt.Println()
+			PrintXCal(m.Year, m.Month, start, end)
+		}
 	}
 }
