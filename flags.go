@@ -7,4 +7,8 @@ var (
 
 	debug = dbtc.Flag("debug", "Set debug logging level.").
 		Bool()
+
+	shortProgress = dbtc.Flag("short-progress", "Display progress as a series of marks rather than on a full calendar.").
+			Short('s').
+			Bool()
 )

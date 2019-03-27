@@ -111,11 +111,24 @@ func main() {
 		fmt.Println("just killing it.. every day, no matter what.")
 	}
 
-	// show some X's to give a feel for how long the chain has been going
-	fmt.Printf("progress -> ")
-	for x := 0; x < chainLen; x++ {
-		fmt.Printf("X")
+	if *shortProgress {
+		// show some X's to give a feel for how long the chain has been going
+		fmt.Printf("progress -> ")
+		for x := 0; x < chainLen; x++ {
+			fmt.Printf("X")
+		}
+		fmt.Println()
+	} else {
+		// TODO: this needs to print more than the current month
+		fmt.Println()
+		start, err := defaultChain.FirstMarkedDate()
+		if err != nil {
+			log.Fatal().Err(err)
+		}
+		end, err := defaultChain.LastMarkedDate()
+		if err != nil {
+			log.Fatal().Err(err)
+		}
+		PrintXCal(end.Year(), end.Month(), start, end)
 	}
-	fmt.Println("")
-
 }
