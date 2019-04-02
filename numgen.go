@@ -14,9 +14,9 @@ func NewNumGen() NumGen {
 	return NumGen{count: 0}
 }
 
-// Next will generate the next number and print it as a string.  If the number
+// Next generates the next number in line.  If the number
 // has one digit it will be padded with a leading space.  Any numbers with
-// two digits and above will be printed as is.  This implementation is specifically
+// two digits and above will be returned as is.  This implementation is specifically
 // suited for numbers with 1 or 2 digits.
 func (n *NumGen) Next() string {
 	n.count += 1
