@@ -41,7 +41,7 @@ func PrintXCal(year int, month time.Month, start, end time.Time) {
 		day := ng.Next()
 		dayNum, _ = strconv.Atoi(strings.TrimLeft(day, " "))
 
-		date := time.Date(year, month, dayNum, 0, 0, 0, 0, time.Local)
+		date := time.Date(year, month, dayNum, 0, 0, 0, 0, time.UTC)
 		if dateInRange(date, start, end) {
 			day = " X"
 		}
